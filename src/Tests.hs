@@ -1,7 +1,8 @@
-module Test where 
+module Tests where 
 
 import qualified Data.PartialOrd as PO
 import Data.List (permutations)
+import Data.Group
 
 import Types
 
@@ -26,3 +27,7 @@ exampleFiltration = ListFiltration $
 exampleFiltration0 = 
   ListFiltration $ (!! 4723430) p where
    p = permutations . toListSimplices $ exampleFiltration
+
+instance Monoid [Simplex s] where
+   mempty   = emptySimplex
+   s0 <> s1 = 

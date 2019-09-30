@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8a78c4b2bc65124d1f29d32a18874ed3e99984a1286d363cb7e89ac6f51d2f70
+-- hash: 1186b3fcb7756f033c364c2af23c37458b4b6f719c3e10dc853a0f2d2d324d7a
 
 name:           PersistenceHomology
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       Homology
       Lib
+      Tests
       Types
       Visualize
   other-modules:
@@ -52,12 +53,14 @@ executable PersistenceHomology-exe
     , containers
     , gloss
     , partial-order
+    , groups
   default-language: Haskell2010
 
 test-suite PersistenceHomology-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Setup
       Paths_PersistenceHomology
   hs-source-dirs:
       test

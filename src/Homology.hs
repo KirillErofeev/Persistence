@@ -20,14 +20,6 @@ import Instances
 
 import Debug.Trace
 
---metricFiltration' fDists pointCloud = foldl' addNewGrade emptyFiltration pds where
---commutativeApp f (ac, x:xs) = commutativeApp f ((f x <$> x:xs) ++ ac, xs)
---commutativeApp f (ac, []  ) = ac
-
---test :: ListFiltration ((DSimplex ListSimplex) (Point Double))
---test = metricFiltration' [0,1,3,100] [Point 0 0, Point 2 2, Point 1 1, Point 3 3] 
-
-
 -- https://geometry.stanford.edu/pape_rs/z-cph-05/zc-cph-05.pdf
 -- should use some map tree instead of list of T_
 --computePersistentHomology :: (Filtration f, FSimplex s, PIntervals h) => f (s a) -> h b

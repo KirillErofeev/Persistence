@@ -18,20 +18,20 @@ class Simplex s where
   -- length . simplexToList $ s a = 1 + (dimension $ s a)
 
 class Simplex s => FSimplex s where
-    fsimplex  :: [a] -> Int -> s a
-    degree    :: s a -> Int
-    updDegree :: (Int -> Int) -> s a -> s a
+    fsimplex  :: [a] -> Double -> s a
+    degree    :: s a -> Double
+    updDegree :: (Double -> Double) -> s a -> s a
     incDegree :: s a -> s a
     incDegree = updDegree (+1)
 
 class (Functor f, Foldable f) => Filtration f where
    emptyFiltration :: f s
    addSimplex      :: (FSimplex s) => f (s a) -> s a -> f (s a)
-   updDegrees      :: (FSimplex s) => (Int -> Int) -> f (s a) -> f (s a)
+   updDegrees      :: (FSimplex s) => (Double -> Double) -> f (s a) -> f (s a)
    toListSimplices :: f s -> [s]
    fromListSimplices :: (FSimplex s, Ord (s a)) => [s a] -> f (s a)
    incDegrees :: (FSimplex s) => f (s a) -> f (s a)
-   incDegrees = updDegrees (+1)
+   incDegrees = updDegrees (+1.0)
 
 class PIntervals p where
     emptyPIntervals :: p a
@@ -43,7 +43,7 @@ class Metric a where
   distance :: a -> a -> Double
 
 data ListSimplex a                         = ListSimplex {isInverseSimplex :: Bool, getListSimplex :: [a]} 
-data DSimplex simplex a                    = DSimplex {dSimplex :: simplex a, degreeSimplex :: Int}
+data DSimplex simplex a                    = DSimplex {dSimplex :: simplex a, degreeSimplex :: Double}
 data Point a                               = Point {x :: a, y :: a} deriving (Eq, Ord)
 data PointCloud a                          = PointCloud [Point a]
 data ListFiltration simplex                = ListFiltration [simplex]
@@ -55,7 +55,7 @@ newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
 
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
 data T_ s = T_ {tElemSimplex_ :: s  , tElemIsMarked_ :: Bool     , 
-                tElemDegree_  :: Int, tElemBoundary_ :: Maybe [s]}
+                tElemDegree_  :: Double, tElemBoundary_ :: Maybe [s]}
                 
 t_ simplex = T_ simplex False 0 Nothing
 

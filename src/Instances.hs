@@ -121,7 +121,7 @@ instance Filtration ListFiltration where
    fromListSimplices s = ListFiltration (sort s)
 
 instance Simplex a => FSimplex (DSimplex a) where
-  fsimplex l d = DSimplex (simplexFromList l) d
+  fsimplexFromList l d = DSimplex (simplexFromList l) d
   degree = degreeSimplex
   updDegree f s = s {degreeSimplex = f $ degreeSimplex s}
 

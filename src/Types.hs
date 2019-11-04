@@ -6,22 +6,25 @@ import qualified Data.PartialOrd as PO
 import qualified Data.Sequence   as Seq
 import Data.List
 
+
 class Simplex s where
-  emptySimplex    ::  s a
-  simplexAppend   :: Ord a => [s a] -> [s a] -> [s a]
-  inverse         ::  s a  -> s a
-  boundary        ::  s a  -> [s a]
-  isInverse       ::  s a  -> Bool
-  dimension       ::  s a  -> Int
-  simplexToList   ::  s a  -> [a]
-  simplexFromList ::   [a] -> s a
+  emptySimplex        ::  s a
+  simplexAppend       :: Ord a => [s a] -> [s a] -> [s a]
+  inverse             ::  s a  -> s a
+  boundary            ::  s a  -> [s a]
+  isInverse           ::  s a  -> Bool
+  dimension           ::  s a  -> Int
+  simplexToList       ::  s a  -> [a]
+  simplexFromList     ::   [a] -> s a
+  --simplexFromFoldable ::
   -- length . simplexToList $ s a = 1 + (dimension $ s a)
 
 class Simplex s => FSimplex s where
-    fsimplex  :: [a] -> Double -> s a
-    degree    :: s a -> Double
-    updDegree :: (Double -> Double) -> s a -> s a
-    incDegree :: s a -> s a
+    fsimplex         :: (Foldable t) => t a -> Double -> s a
+    fsimplexFromList :: [a] -> Double -> s a
+    degree           :: s a -> Double
+    updDegree        :: (Double -> Double) -> s a -> s a
+    incDegree        :: s a -> s a
     incDegree = updDegree (+1)
 
 class (Functor f, Foldable f) => Filtration f where
@@ -54,7 +57,7 @@ data PInterval a                           = PIntervalFinite   {pStart :: a, pFi
 newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
 
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
-data T_ s = T_ {tElemSimplex_ :: s  , tElemIsMarked_ :: Bool     , 
+data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     , 
                 tElemDegree_  :: Double, tElemBoundary_ :: Maybe [s]}
                 
 t_ simplex = T_ simplex False 0 Nothing

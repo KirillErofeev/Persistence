@@ -7,17 +7,18 @@ import qualified Data.Sequence   as Seq
 import Data.List
 
 
-class Simplex s where
+class Foldable s => Simplex s where
   emptySimplex        ::  s a
   simplexAppend       :: Ord a => [s a] -> [s a] -> [s a]
+  expand              ::  s a -> a -> s a 
   inverse             ::  s a  -> s a
   boundary            ::  s a  -> [s a]
   isInverse           ::  s a  -> Bool
   dimension           ::  s a  -> Int
   simplexToList       ::  s a  -> [a]
   simplexFromList     ::   [a] -> s a
-  --simplexFromFoldable ::
-  -- length . simplexToList $ s a = 1 + (dimension $ s a)
+  --simplexToFoldable ::  (Foldable t) => s a -> t a
+  --simplexToList s = foldr (:) [] . simplexToFoldable
 
 class Simplex s => FSimplex s where
     fsimplex         :: (Foldable t) => t a -> Double -> s a

@@ -82,3 +82,6 @@ carlssonTest = computePersistentHomology filtration where
 --   f' x (x0,x1,x2) | x `mod` 3  == 0 = (x0+1,x1  ,x2  )
 --                   | x `mod` 3  == 1 = (x0  ,x1+1,x2  )
 --                   | x `mod` 3  == 2 = (x0  ,x1  ,x2+1)
+--foldMap0 f l = foldr ((<>) . f) mempty l 
+--
+--foldr0 f e l = foldMap (f) id l 

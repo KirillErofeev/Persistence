@@ -43,8 +43,12 @@ instance (Eq a, Show a) => PO.PartialOrd (ListSimplex a) where
 
   a <= b = PO.compare a b == Just LT || PO.compare a b == Just EQ
 
+instance Foldable ListSimplex where
+    foldMap f (ListSimplex _ s) = foldMap f s 
+
 instance Simplex ListSimplex where
   emptySimplex                      = ListSimplex False []
+  expand (ListSimplex i s) a = ListSimplex i (a:s)
   simplexAppend s0 s1 = foldr sAp [] $ sortBy simplexSort ((sortD <$>) $ s0 ++ s1) where
      simplexSort (ListSimplex _ l) (ListSimplex _ l0)
          | length l /= length l0 = compare (length l) (length l0)
@@ -64,6 +68,9 @@ instance Simplex ListSimplex where
       --boundary' s | trace ("get Boundary: " ++ show s) False = undefined
       boundary' []     = []
       boundary' (s:ss) = ss : (map (s:) $ boundary' ss)
+
+instance (Simplex s) => Foldable (DSimplex s) where
+    foldMap = undefined
 
 instance Simplex s => Simplex (DSimplex s) where
   emptySimplex                 = DSimplex emptySimplex 0

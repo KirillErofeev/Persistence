@@ -29,15 +29,22 @@ library
   exposed-modules:
       Homology
       Lib
-      Tests
-      Types
       Visualize
+      Filtration
+      Types
+      Tests
   other-modules:
       Paths_PersistenceHomology
+      Instances
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
+    , base >=4.7 && <5
+    , containers
+    , gloss
+    , partial-order
+    , groups
   default-language: Haskell2010
 
 executable PersistenceHomology-exe
@@ -60,7 +67,6 @@ test-suite PersistenceHomology-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Setup
       Paths_PersistenceHomology
   hs-source-dirs:
       test
@@ -68,4 +74,10 @@ test-suite PersistenceHomology-test
   build-depends:
       PersistenceHomology
     , base >=4.7 && <5
+    , containers
+    , gloss
+    , partial-order
+    , groups
+    , tasty
+    , tasty-hunit
   default-language: Haskell2010

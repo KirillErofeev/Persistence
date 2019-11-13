@@ -51,11 +51,14 @@ data DSimplex simplex a                    = DSimplex {dSimplex :: simplex a, de
 data Point a                               = Point {x :: a, y :: a} deriving (Eq, Ord)
 data PointCloud a                          = PointCloud [Point a]
 data ListFiltration simplex                = ListFiltration [simplex]
-data ListsPIntervals a = ListsPIntervals {getListsPIntervals :: [[PInterval a]]} 
+data ListsPIntervals a = ListsPIntervals {getListsPIntervals :: [[PInterval a]]} deriving Eq
 data PInterval a                           = PIntervalFinite   {pStart :: a, pFinish :: a} |
-                                             PIntervalInfinite {pStart :: a} deriving Show
+                                             PIntervalInfinite {pStart :: a} 
+                                                deriving (Show, Eq)
 
+--newtype Chain f s a = Chain {getChain :: [(f, s a)]} deriving (Show)
 newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
+
 
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
 data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     , 

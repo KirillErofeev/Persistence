@@ -1,6 +1,7 @@
 module Filtration where
 
-import Data.List (foldl')
+import Data.List (foldl', sort)
+import qualified Data.Set as Set
 import Data.Monoid
 import Data.Semigroup
 
@@ -18,11 +19,14 @@ buildFiltration distance points maxDim maxDist = concat $ snd $
         f (curDimSimplicies, simplicies) dim =
             let newSimplicies = addNewDim (dSimplex <$> curDimSimplicies)
             in (newSimplicies, newSimplicies:simplicies)
-        addNewDim baseSimplicies = concat $ findNewSimplicies <$> baseSimplicies
-        findNewSimplicies simplex = filter checkDist $ addSimplex simplex <$> points
-        checkDist s = getAll $ foldMap (\f -> All (f $ degreeSimplex s)) [(>0), (<=maxDist)]
+        addNewDim baseSimplicies = replaysFilter $ concat $ findNewSimplicies <$> baseSimplicies
+        findNewSimplicies simplex = addSimplex simplex <$> 
+            filter (not . flip elem simplex) points
         addSimplex simplex point = DSimplex (expand simplex point) $
-            getMin (foldMap (Min . (distance point)) simplex)
+            getMax (foldMap (Max . (distance point)) simplex)
+
+replaysFilter ss = (Set.toList . Set.fromList) $ sortSimplex <$> ss where
+    sortSimplex (DSimplex (ListSimplex i s) d) = DSimplex (ListSimplex i (sort s)) d
 
 testF = goodShow $ (buildFiltration ((abs .) . (-)) [1,2,7] 5 7 :: [DSimplex ListSimplex Double])
 

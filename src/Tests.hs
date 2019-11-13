@@ -46,18 +46,6 @@ import Debug.Trace
 --testSimplexOp :: ListSimplex Int
 --testSimplexOp = mempty<>a<>invert c<>d<>invert b<>invert c<>invert c<>invert b<>b<>a<>b<>invert a<>c<>c<>c<>invert d
 
--- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
-carlssonTest = computePersistentHomology filtration where
-   filtration :: ListFiltration (DSimplex ListSimplex Int)
-   filtration = ListFiltration $ uncurry s <$> 
-                [([0]    , 0), ([1],   0), 
-                 ([2]    , 1), ([3],   1), ([0,1], 1), ([1,2], 1),
-                 ([2,3]  , 2), ([0,3], 2),
-                 ([0,2]  , 3),
-                 ([0,1,2], 4),
-                 ([0,2,3], 5)]
-   s ls d = DSimplex (ListSimplex False ls) d
-
 --testInterval :: ListsPIntervals Int
 --testInterval = addInterval (addInterval emptyPIntervals 3 (PIntervalFinite 7 223)) 5 (PIntervalFinite 7 9)
 --sIn (ListsPIntervals l) = l

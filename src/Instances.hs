@@ -2,18 +2,49 @@
 {-#language FlexibleContexts #-}
 module Instances where
 
+import Numeric.Field.Class
+
 import qualified Data.PartialOrd as PO
 import Data.List
 import Data.Group
+import Data.Pointed
 
-import Types 
+import Numeric.Domain.PID
+import Numeric.Field.Class
+import qualified Numeric.Additive.Class as Additive
+import qualified Numeric.Additive.Group as Group (negate)
+import Numeric.Decidable.Zero (isZero)
+import Numeric.Algebra.Class (zero)
+import Numeric.Algebra.Unital (one)
+
+import Types
 
 import Debug.Trace
 
 instance (Simplex s, Eq (s a), Eq a) => Eq (T_ (s a)) where
    t0 == t1 =
       tElemSimplex_ t0 == tElemSimplex_ t1
-       || inverse (tElemSimplex_ t0) == tElemSimplex_ t1 
+       || inverse (tElemSimplex_ t0) == tElemSimplex_ t1
+
+instance (Field f, Ord a, Simplex s) => Semigroup (FChain f s a) where
+   --FChain s0 <> FChain s1 = FChain $ [((fst . head) s0 + (fst . head) s1, s0)]
+   FChain s0 <> FChain s1 = FChain $ filter (not . isZero . fst) $
+       foldr reduce [] $ (sortBy simplexSort $ s0 <> s1) where
+           simplexSort ss0 ss1 = compare (sort . simplexToList . snd $ ss0)
+                                         (sort . simplexToList . snd $ ss1)
+           reduce simplex [] = [simplex]
+           reduce curSimplex@(f0, simplex0) checkedSimplicies@((f1, simplex1) : simplicies)
+               | simplex0 == simplex1 = (f0 Additive.+ f1, simplex0) : simplicies
+               | otherwise            = curSimplex : checkedSimplicies
+
+instance (Field f, Ord a, Simplex s) => Monoid (FChain f s a) where
+   mempty   = FChain []
+
+instance (Field f, Ord a, Simplex s) => Group (FChain f s a) where
+   invert = FChain . (inverse <$>) . getFChain where
+       inverse (cf, s) = (Group.negate cf, s)
+
+instance (Field f, Ord a, Simplex s) => Abelian (FChain f s a)
 
 instance (Ord a, Simplex s) => Semigroup (Chain s a) where
    Chain s0 <> Chain s1 = Chain $ s0 `simplexAppend` s1
@@ -44,7 +75,7 @@ instance (Eq a, Show a) => PO.PartialOrd (ListSimplex a) where
   a <= b = PO.compare a b == Just LT || PO.compare a b == Just EQ
 
 instance Foldable ListSimplex where
-    foldMap f (ListSimplex _ s) = foldMap f s 
+    foldMap f (ListSimplex _ s) = foldMap f s
 
 instance Simplex ListSimplex where
   emptySimplex                      = ListSimplex False []

@@ -1,6 +1,6 @@
 {-#language KindSignatures #-}
 {-#language MultiParamTypeClasses #-}
-module Types where
+module Types1 where
 
 import qualified Data.PartialOrd as PO
 import qualified Data.Sequence   as Seq
@@ -63,8 +63,8 @@ newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
 --data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     ,
 --                tElemDegree_  :: Double, tElemBoundary_ :: Maybe [s]}
-data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     ,
-                  tElemDegree_  :: Double, tElemBoundary_ :: Maybe [s]}
+data T_ f s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     ,
+                tElemDegree_  :: Double, tElemBoundary_ :: Maybe [(f, s)]}
 
 t_ simplex = T_ simplex False 0 Nothing
 
@@ -77,13 +77,13 @@ instance (Show a) => Show (ListsPIntervals a) where
        emptyProcess "" = "[]"
        emptyProcess s  = s
 
-instance (Show s) => Show (T_ s) where
-   show (T_ s b d boundary) = "|" ++ show s ++ dShow ++ bShow ++ boundShow ++ "|" where
-      dShow = "^" ++ show d
-      bShow = case b of
-         False -> ""
-         True  -> "*"
-      boundShow = case boundary of
-         Nothing    -> ""
-         Just bound -> "<" ++ show boundary ++ ">"
-
+--instance (Show s) => Show (T_ s) where
+--   show (T_ s b d boundary) = "|" ++ show s ++ dShow ++ bShow ++ boundShow ++ "|" where
+--      dShow = "^" ++ show d
+--      bShow = case b of
+--         False -> ""
+--         True  -> "*"
+--      boundShow = case boundary of
+--         Nothing    -> ""
+--         Just bound -> "<" ++ show boundary ++ ">"
+--

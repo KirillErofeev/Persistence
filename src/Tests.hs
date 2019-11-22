@@ -7,12 +7,44 @@ import Data.List (permutations)
 import Data.Group
 
 import Types
+import Instances
 --import Types0
 
 import Homology
 
+--import Prelude hiding ((-), negate)
+--import Numeric.Additive.Group
+import Numeric.Field.Fraction
+
 import Debug.Trace
 
+
+fChain c s = FChain $ [(c%1, ListSimplex False s)]
+ls s = ListSimplex False s
+
+fChainAddTest :: FChain (Fraction Integer) ListSimplex Int
+fChainAddTest   = fChain 3 [0] <> fChain (negate 4) [1] <> fChain    7 [3] <> fChain 11 [1] <> fChain  2 [0]
+fChainAddTest0  = fChain 3 [0] <> fChain (negate 7) [1] <> fChain (negate 4) [1] <> fChain  7 [3] <> fChain 11 [1] <> 
+    fChain 2 [0]
+fChainZeroTest  = fChain (negate 7) [1] <> fChainAddTest <> fChain 0 [0] <> invert fChainAddTest0 <> fChain 0 [7] 
+
+--fChainAddTestAnswer :: FChain Integer ListSimplex Int
+fChainAddTestAnswer  = FChain $ (ls <$>) <$> [(5,[0]), (7,[1]), (7,[3])]
+fChainAddTestAnswer0 = FChain $ (ls <$>) <$> [(5,[0]), (7,[3])]
+fChainZeroTestAnswer = mempty :: FChain (Fraction Integer) ListSimplex Int 
+
+carlssonTest ::  ListsPIntervals Double
+--carlssonTest = computePersistentHomology ((1%1) :: Fraction Integer) filtration where
+carlssonTest = computePersistentHomology ((1%1) :: Fraction Integer) filtration where
+   --filtration :: ListFiltration (DSimplex ListSimplex Int)
+   filtration = ListFiltration $ uncurry s <$>
+                [([0]    , 0), ([1],   0),
+                 ([2]    , 1), ([3],   1), ([0,1], 1), ([1,2], 1),
+                 ([2,3]  , 2), ([0,3], 2),
+                 ([0,2]  , 3),
+                 ([0,1,2], 4),
+                 ([0,2,3], 5)]
+   s ls d = DSimplex (ListSimplex False ls) d
 
 --bnd [] = []
 --bnd (x:xs) = xs : (map (x:) $ bnd xs)

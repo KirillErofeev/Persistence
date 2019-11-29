@@ -21,10 +21,14 @@ import Types
 
 import Debug.Trace
 
-instance (Simplex s, Eq (s a), Eq a) => Eq (T_ (s a)) where
+instance (Simplex s, Eq f, Eq (s a), Eq a) => Eq (T_ f s a) where
    t0 == t1 =
       tElemSimplex_ t0 == tElemSimplex_ t1
        || inverse (tElemSimplex_ t0) == tElemSimplex_ t1
+
+instance (Eq f, Eq (s a)) => Eq (FChain f s a) where 
+    FChain f0 == FChain f1 = length f0 == length f1 && 
+                             all (flip elem f1) f0 
 
 instance (Field f, Ord a, Simplex s) => Semigroup (FChain f s a) where
    --FChain s0 <> FChain s1 = FChain $ [((fst . head) s0 + (fst . head) s1, s0)]
@@ -45,6 +49,9 @@ instance (Field f, Ord a, Simplex s) => Group (FChain f s a) where
        inverse (cf, s) = (Group.negate cf, s)
 
 instance (Field f, Ord a, Simplex s) => Abelian (FChain f s a)
+
+instance (Field f, Ord a, Simplex s) => Additive.Additive (FChain f s a) where
+    (+) = (<>)
 
 instance (Ord a, Simplex s) => Semigroup (Chain s a) where
    Chain s0 <> Chain s1 = Chain $ s0 `simplexAppend` s1
@@ -95,24 +102,26 @@ instance Simplex ListSimplex where
   isInverse (ListSimplex i _) = i
   --inverse   (ListSimplex i s) | trace "inverse" False = undefined 
   inverse   (ListSimplex i s) = ListSimplex (not i) s
-  boundary  (ListSimplex i s) = zipWith ListSimplex (iterate not i) (filter (\l -> length l > 0) (boundary' s)) where
+  boundary  one (ListSimplex i s) = FChain $ 
+    zip (zipWith ($) flipSigns (repeat one)) ((ListSimplex False <$>) . filter ((>0) . length) $ (boundary' s)) where
       --boundary' s | trace ("get Boundary: " ++ show s) False = undefined
       boundary' []     = []
       boundary' (s:ss) = ss : (map (s:) $ boundary' ss)
+      flipSigns = id : Group.negate : flipSigns
 
 instance (Simplex s) => Foldable (DSimplex s) where
     foldMap = undefined
 
-instance Simplex s => Simplex (DSimplex s) where
-  emptySimplex                 = DSimplex emptySimplex 0
-  dimension     (DSimplex l d) = dimension     l
-  simplexToList (DSimplex l d) = simplexToList l
-  simplexFromList l            = DSimplex (simplexFromList l) 0
-  inverse       (DSimplex l d) | trace "bad inverse" False = undefined
-  inverse       (DSimplex l d) = DSimplex (inverse l) d
-  isInverse     (DSimplex l d) | trace "bad is inverse" False = undefined
-  isInverse     (DSimplex l d) = isInverse l
-  boundary      (DSimplex l d) = flip DSimplex d <$> (boundary l) 
+-----instance Simplex s => Simplex (DSimplex s) where
+-----  emptySimplex                 = DSimplex emptySimplex 0
+-----  dimension     (DSimplex l d) = dimension     l
+-----  simplexToList (DSimplex l d) = simplexToList l
+-----  simplexFromList l            = DSimplex (simplexFromList l) 0
+-----  inverse       (DSimplex l d) | trace "bad inverse" False = undefined
+-----  inverse       (DSimplex l d) = DSimplex (inverse l) d
+-----  isInverse     (DSimplex l d) | trace "bad is inverse" False = undefined
+-----  isInverse     (DSimplex l d) = isInverse l
+-----  boundary  one  = boundary one . dSimplex
 
 instance {-#OVERLAPS#-} (Ord a, FSimplex s) => Ord (s a) where
   compare a b | False = undefined
@@ -158,10 +167,10 @@ instance Filtration ListFiltration where
    toListSimplices (ListFiltration l) = l
    fromListSimplices s = ListFiltration (sort s)
 
-instance Simplex a => FSimplex (DSimplex a) where
-  fsimplexFromList l d = DSimplex (simplexFromList l) d
-  degree = degreeSimplex
-  updDegree f s = s {degreeSimplex = f $ degreeSimplex s}
+-----instance Simplex a => FSimplex (DSimplex a) where
+-----  fsimplexFromList l d = DSimplex (simplexFromList l) d
+-----  degree = degreeSimplex
+-----  updDegree f s = s {degreeSimplex = f $ degreeSimplex s}
 
 instance RealFloat a => Metric (Point a) where
   distance (Point a b) (Point a0 b0) = realToFrac $ sqrt $ (a - a0)^2 + (b - b0)^2

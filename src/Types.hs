@@ -5,14 +5,15 @@ module Types where
 import qualified Data.PartialOrd as PO
 import qualified Data.Sequence   as Seq
 import Data.List
+import Numeric.Domain.PID
 
 
 class Foldable s => Simplex s where
   emptySimplex        ::  s a
   simplexAppend       :: Ord a => [s a] -> [s a] -> [s a]
-  expand              ::  s a -> a -> s a 
+  expand              ::  s a -> a -> s a
   inverse             ::  s a  -> s a
-  boundary            ::  s a  -> [s a]
+  boundary            :: PID f => f -> s a -> FChain f s a
   isInverse           ::  s a  -> Bool
   dimension           ::  s a  -> Int
   simplexToList       ::  s a  -> [a]
@@ -56,15 +57,15 @@ data PInterval a                           = PIntervalFinite   {pStart :: a, pFi
                                              PIntervalInfinite {pStart :: a}
                                                 deriving (Show, Eq)
 
-newtype FChain f s a = FChain {getFChain :: [(f, s a)]} deriving (Show, Eq)
+newtype FChain f s a = FChain {getFChain :: [(f, s a)]} deriving (Show)
 newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
 
 
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
 --data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     ,
 --                tElemDegree_  :: Double, tElemBoundary_ :: Maybe [s]}
-data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     ,
-                  tElemDegree_  :: Double, tElemBoundary_ :: Maybe [s]}
+data T_ f s a = T_ {tElemSimplex_ :: s a   , tElemIsMarked_ :: Bool     ,
+                    tElemDegree_  :: Double, tElemBoundary_ :: Maybe (FChain f s a)}
 
 t_ simplex = T_ simplex False 0 Nothing
 
@@ -77,13 +78,13 @@ instance (Show a) => Show (ListsPIntervals a) where
        emptyProcess "" = "[]"
        emptyProcess s  = s
 
-instance (Show s) => Show (T_ s) where
-   show (T_ s b d boundary) = "|" ++ show s ++ dShow ++ bShow ++ boundShow ++ "|" where
-      dShow = "^" ++ show d
-      bShow = case b of
-         False -> ""
-         True  -> "*"
-      boundShow = case boundary of
-         Nothing    -> ""
-         Just bound -> "<" ++ show boundary ++ ">"
+--instance (Show s) => Show (T_ s) where
+--   show (T_ s b d boundary) = "|" ++ show s ++ dShow ++ bShow ++ boundShow ++ "|" where
+--      dShow = "^" ++ show d
+--      bShow = case b of
+--         False -> ""
+--         True  -> "*"
+--      boundShow = case boundary of
+--         Nothing    -> ""
+--         Just bound -> "<" ++ show boundary ++ ">"
 

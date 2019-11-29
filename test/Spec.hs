@@ -15,7 +15,10 @@ tests = testGroup "Tests" [unitTests]
 
 unitTests = testGroup "Unit tests"
     [testCase "Carlsson test" $ carlssonTest @?= carlssonTestAnswer
-    ,testCase "FChain additive semigroup" $ fChainAddTest @?= fChainAddTestAnswer
+    ,testCase "FChain additive semigroup" $ fChainAddTest          @?= fChainAddTestAnswer
+    ,testCase "Boundary test 1-simplex"   $ boundaryTest           @?= boundaryTestAnswer
+    ,testCase "Boundary test 0-simplex"   $ zeroBoundaryTest       @?= zeroBoundaryTestAnswer
+    ,testCase "Boundary test 2-simplex"   $ twoSimplexBoundaryTest @?= twoSimplexBoundaryAnswer
     ]
 
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
@@ -44,4 +47,15 @@ fChainAddTest = fChain 3 [0] <> fChain (-4) [1] <> fChain 7 [3] <> fChain 11 [1]
 fChainAddTestAnswer :: FChain (Fraction Integer) ListSimplex Int
 fChainAddTestAnswer = fChain 5 [0] <> fChain 7 [1] <> fChain 7 [3]
 
+boundaryTest = boundary (1%1) (ls [0,1])
 
+boundaryTestAnswer :: FChain (Fraction Integer) ListSimplex Int
+boundaryTestAnswer = fChain (-1) [0] <> fChain 1 [1]
+
+zeroBoundaryTest = boundary (1%1) (ls [0])
+zeroBoundaryTestAnswer :: FChain (Fraction Integer) ListSimplex Int
+zeroBoundaryTestAnswer = FChain []
+
+twoSimplexBoundaryTest = boundary (1%1) (ls [3,7,11])
+twoSimplexBoundaryAnswer :: FChain (Fraction Integer) ListSimplex Int 
+twoSimplexBoundaryAnswer = fChain 1 [7,11] <> fChain (-1) [3,11] <> fChain 1 [3,7] 

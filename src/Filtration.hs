@@ -25,8 +25,9 @@ buildFiltration distance points maxDim maxDist = concat $ snd $
         addSimplex simplex point = DSimplex (expand simplex point) $
             getMax (foldMap (Max . (distance point)) simplex)
 
-replaysFilter ss = (Set.toList . Set.fromList) $ sortSimplex <$> ss where
-    sortSimplex (DSimplex (ListSimplex i s) d) = DSimplex (ListSimplex i (sort s)) d
+--replaysFilter ss = (Set.toList . Set.fromList) $ sortSimplex <$> ss where
+--    sortSimplex (DSimplex (ListSimplex i s) d) = DSimplex (ListSimplex i (sort s)) d
+replaysFilter = undefined
 
 testF = goodShow $ (buildFiltration ((abs .) . (-)) [1,2,7] 5 7 :: [DSimplex ListSimplex Double])
 

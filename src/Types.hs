@@ -56,7 +56,7 @@ data PInterval a                           = PIntervalFinite   {pStart :: a, pFi
                                              PIntervalInfinite {pStart :: a}
                                                 deriving (Show, Eq)
 
-newtype FChain f s a = FChain {getFChain :: [(f, s a)]} deriving (Show)
+newtype FChain f s a = FChain {getFChain :: [(f, s a)]} deriving (Show, Eq)
 newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
 
 

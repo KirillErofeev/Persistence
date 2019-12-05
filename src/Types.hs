@@ -7,7 +7,6 @@ import qualified Data.Sequence   as Seq
 import Data.List
 import Numeric.Domain.PID
 
-
 class Foldable s => Simplex s where
   emptySimplex        ::  s a
   simplexAppend       :: Ord a => [s a] -> [s a] -> [s a]
@@ -59,7 +58,6 @@ data PInterval a                           = PIntervalFinite   {pStart :: a, pFi
 
 newtype FChain f s a = FChain {getFChain :: [(f, s a)]} deriving (Show)
 newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
-
 
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
 --data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     ,

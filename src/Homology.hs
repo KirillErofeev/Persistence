@@ -13,6 +13,11 @@ import Data.List
 import Data.Maybe (fromJust, isJust)
 import Data.Group
 
+import qualified Numeric.Additive.Class as Additive ((+))
+import qualified Numeric.Additive.Group as Group (negate)
+import qualified Numeric.Algebra.Division as Division (recip)
+import Numeric.Module.Class ((.*))
+
 import Control.Applicative (ZipList(..))
 
 import Types
@@ -25,131 +30,76 @@ import Debug.Trace
 
 -- https://geometry.stanford.edu/pape_rs/z-cph-05/zc-cph-05.pdf
 -- should use some map tree instead of list of T_
---computePersistentHomology :: (Filtration f, FSimplex s, PIntervals h) => f (s a) -> h b
---computePersistentHomology :: ListFiltration (DSimplex ListSimplex Int) -> ListsPIntervals Int
---computePersistentHomology0 filtration = snd $ let
---   (tArray', pIntervals') = 
---      foldl' computeFiniteIntervals   (tArray filtration, pIntervals ) (dSimplex <$> filtration) 
---          in
---      foldl' computeInfiniteIntervals (tArray'          , pIntervals') (dSimplex <$> filtration) 
---
---computeInfiniteIntervals (tAr, pIn) simplex
---   | isMarked tAr simplex && isEmpty tAr simplex = (tAr, 
---      addInterval pIn (dimension simplex) (PIntervalInfinite $ findDegree tAr simplex))
---   | otherwise = (tAr, pIn)
---
---computeFiniteIntervals (tAr, pIn) simplex = case removePivotRows tAr simplex of
---   [] -> (updateSimplex tAr (\s -> s {tElemIsMarked_ = True}) simplex, pIn         )
---   d  -> (addBoundary 0                                              , addPInterval) where
---      addBoundary i  = (updateSimplex tAr (\s -> s {tElemBoundary_ = Just d})) (dSimplex maxIndSimplex)
---      addPInterval  = addInterval pIn (dimension maxIndSimplex)
---         (PIntervalFinite (degree maxIndSimplex) (findDegree tAr simplex))
---      maxIndSimplex = maxIndex tAr d
---
---tArray filtration = getZipList $
---       (ZipList $ (T_ . dSimplex) <$> listF)     <*> ZipList (repeat False) <*>
---       (ZipList $ degree <$> listF) <*> ZipList (repeat Nothing) where
---    listF = foldr (:) [] filtration
---pIntervals = emptyPIntervals :: ListsPIntervals a
---
---removePivotRows tAr simplex = snd $ head $ dropWhile fst $
---       iterate (removePivotRows' tAr) $ (True, (filter (isMarked tAr) $ boundary simplex))
---
---removePivotRows' tAr (p,[]) = (False, [])
---removePivotRows' tAr (p,ss) =
---   case (tElemBoundary_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss) of
---      Nothing -> (False, ss)
---      Just b | simplexCoeff b (maxSm tAr ss) /= simplexCoeff ss (maxSm tAr ss) ->
---               (True, getChain $ Chain ss <>         Chain b)
---             | otherwise                                                       ->
---               (True, getChain $ Chain ss <> invert (Chain b)) where
---         simplexCoeff ss s = isInverse $ fromJust $ find (findCoeff s) ss
---         findCoeff s s' | s == s' || (inverse s) == s' = True
---                        | otherwise                    = False
---         maxSm = (dSimplex .) . maxIndex
---
---isEmpty tAr  = not . isJust . tElemBoundary_ . findSimplex tAr
---isMarked tAr = tElemIsMarked_ . findSimplex tAr
---maxIndex tAr boundary = maximum $ zipWith DSimplex boundary $ findDegree tAr <$> boundary
---findDegree tAr = tElemDegree_ . findSimplex tAr
---findSimplex tAr simplex = fromJust $
---       find (\s -> tElemSimplex_ s == reverseIfInverse simplex) tAr
---
-----updateSimplex :: [T_ (ListSimplex Int)] -> (T_ (ListSimplex Int) -> T_ (ListSimplex Int)) -> ListSimplex Int -> [T_ (ListSimplex Int)]
---updateSimplex tAr f simplex = foldr updateSimplex' [] tAr where
---    updateSimplex' t ts | t == t_ simplex = f t : ts
---                        | otherwise       =   t : ts
---reverseIfInverse s | isInverse s = inverse s
---                   | otherwise   = s
 
-computePersistentHomology one filtration = undefined
---computePersistentHomology one filtration = snd $ let
---   (tArray', pIntervals') = 
---      foldl' (computeFiniteIntervals one) (tArray filtration, pIntervals ) (dSimplex <$> filtration) 
---          in
---      foldl' computeInfiniteIntervals     (tArray'          , pIntervals') (dSimplex <$> filtration) 
---
---computeInfiniteIntervals (tAr, pIn) simplex
---   | isMarked tAr simplex && isEmpty tAr simplex = (tAr,
---      addInterval pIn (dimension simplex) (PIntervalInfinite $ findDegree tAr simplex))
---   | otherwise = (tAr, pIn)
---
---computeFiniteIntervals one (tAr, pIn) simplex = case removePivotRows one tAr simplex of
---   [] -> (updateSimplex tAr (\s -> s {tElemIsMarked_ = True}) simplex, pIn         )
---   d  -> (addBoundary 0                                              , addPInterval) where
---      addBoundary i  = (updateSimplex tAr (\s -> s {tElemBoundary_ = Just (d)})) (dSimplex maxIndSimplex)
---      --addBoundary i  = (updateSimplex tAr (\s -> s {tElemBoundary_ = Just d})) (dSimplex maxIndSimplex)
---      addPInterval  = addInterval pIn (dimension maxIndSimplex)
---         (PIntervalFinite (degree maxIndSimplex) (findDegree tAr simplex))
---      maxIndSimplex = maxIndex tAr d
---
---tArray filtration = getZipList $
---       (ZipList $ (T_ . dSimplex) <$> listF)     <*> ZipList (repeat False) <*>
---       (ZipList $ degree <$> listF) <*> ZipList (repeat Nothing) where
---    listF = foldr (:) [] filtration
---pIntervals = emptyPIntervals :: ListsPIntervals a
---
---removePivotRows one tAr simplex = snd $ head $ dropWhile fst $
---       iterate (removePivotRows' one tAr) $ (True, (filter (isMarked tAr) $ boundary one simplex))
---
---removePivotRows' one tAr (p,[]) = (False, [])
---removePivotRows' one tAr (p,ss) =
---   case (tElemBoundary_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss) of
---      Nothing -> (False, ss)
---      Just b  -> (True, simpliciesFromFChain $ makeFChain one ss <> (invert $ b)) where
---         simplexCoeff ss s = isInverse $ fromJust $ find (findCoeff s) ss
---         findCoeff s s' | s == s' || (inverse s) == s' = True
---                        | otherwise                    = False
---         maxSm = (dSimplex .) . maxIndex
-----      Just b | simplexCoeff b (maxSm tAr ss) /= simplexCoeff ss (maxSm tAr ss) ->
-----               (True, getChain $ Chain ss <>         Chain b)
-----             | otherwise                                                       ->
-----               (True, getChain $ Chain ss <> invert (Chain b)) where
---
---makeFChain :: (Field f) => f -> [s a] -> FChain f s a
---makeFChain one ss = FChain $ (\x -> (one, x)) <$> ss
---
---simpliciesFromFChain (FChain chain) = snd <$> chain
---
---makeFChain0 :: (Field f) => f -> [s a] -> [(f, s a)]
---makeFChain0 one ss = (\x -> (one, x)) <$> ss
---
---isEmpty tAr  = not . isJust . tElemBoundary_ . findSimplex tAr
---isMarked tAr = tElemIsMarked_ . findSimplex tAr
---maxIndex tAr boundary = maximum $ 
---    zipWith DSimplex boundary $ findDegree tAr <$> (snd <$> boundary)
---findDegree tAr = tElemDegree_ . findSimplex tAr
---findSimplex tAr simplex = fromJust $
---       find (\s -> tElemSimplex_ s == reverseIfInverse simplex) tAr
---
-----updateSimplex :: [T_ (ListSimplex Int)] -> (T_ (ListSimplex Int) -> T_ (ListSimplex Int)) -> ListSimplex Int -> [T_ (ListSimplex Int)]
+---computePersistentHomology one filtration = undefined
+computePersistentHomology one filtration = snd $ let
+   (tArray', pIntervals') = 
+      foldl' (computeFiniteIntervals one) (tArray filtration, pIntervals ) (dSimplex <$> filtration) 
+          in
+      foldl' computeInfiniteIntervals     (tArray'          , pIntervals') (dSimplex <$> filtration) 
+
+computeInfiniteIntervals (tAr, pIn) simplex
+   | isMarked tAr simplex && isEmpty tAr simplex = (tAr,
+      addInterval pIn (dimension simplex) (PIntervalInfinite $ findDegree tAr simplex))
+   | otherwise = (tAr, pIn)
+
+computeFiniteIntervals one (tAr, pIn) simplex = case removePivotRows one tAr simplex of
+   FChain [] -> (updateSimplex tAr (\s -> s {tElemIsMarked_ = True}) simplex, pIn         )
+   d         -> (addBoundary 0 , addPInterval) where
+      addBoundary i  = updateSimplex tAr (\s -> s {tElemBoundary_ = Just d}) (dSimplex maxIndSimplex)
+      --addBoundary i  = (updateSimplex tAr (\s -> s {tElemBoundary_ = Just d})) (dSimplex maxIndSimplex)
+      addPInterval  = addInterval pIn (dimension maxIndSimplex)
+         (PIntervalFinite (degreeSimplex maxIndSimplex) (findDegree tAr simplex))
+      maxIndSimplex = maxIndex tAr d
+
+tArray filtration = getZipList $
+       (ZipList $ (T_ . dSimplex) <$> listF)     <*> ZipList (repeat False) <*>
+       (ZipList $ degreeSimplex <$> listF) <*> ZipList (repeat Nothing) where
+    listF = foldr (:) [] filtration
+pIntervals = emptyPIntervals :: ListsPIntervals a
+
+removePivotRows one tAr simplex = snd $ head $ dropWhile fst $
+    iterate (removePivotRows' one tAr) $
+    (True, (removeMarkedTerms $ boundary one simplex)) where
+        removeMarkedTerms = FChain . (filter (isMarked tAr . snd)) . getFChain  
+removePivotRows' one tAr (p, FChain []) = (False, FChain [])
+removePivotRows' one tAr (p,ss) =
+   case (tElemBoundary_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss) of
+      Nothing -> (False, ss)
+      Just b  -> (True, ss Additive.+ Group.negate (Division.recip q .* b)) where
+         q = coeffElemInChain b (tElemSimplex_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss)
+         simplexCoeff ss s = isInverse $ fromJust $ find (findCoeff s) ss
+         findCoeff s s' | s == s' || (inverse s) == s' = True
+                        | otherwise                    = False
+         maxSm = (dSimplex .) . maxIndex
+
+coeffElemInChain (FChain chain) element = fst . head . dropWhile ((/=element) . snd) $ chain 
+
+makeFChain :: (Field f) => f -> [s a] -> FChain f s a
+makeFChain one ss = FChain $ (\x -> (one, x)) <$> ss
+
+simpliciesFromFChain (FChain chain) = snd <$> chain
+
+makeFChain0 :: (Field f) => f -> [s a] -> [(f, s a)]
+makeFChain0 one ss = (\x -> (one, x)) <$> ss
+
+isEmpty tAr  = not . isJust . tElemBoundary_ . findSimplex tAr
+isMarked tAr = tElemIsMarked_ . findSimplex tAr
+
+maxIndex tAr (FChain boundary) = maximum $
+    zipWith DSimplex (snd <$> boundary) $ findDegree tAr <$> (snd <$> boundary)
+findDegree tAr = tElemDegree_ . findSimplex tAr
+findSimplex tAr simplex = fromJust $
+       find (\s -> tElemSimplex_ s == reverseIfInverse simplex) tAr
+
 --updateSimplex tAr f simplex = foldr updateSimplex' [] tAr where
 --    updateSimplex' t ts | t == t_ simplex = f t : ts
 --                        | otherwise       =   t : ts
---reverseIfInverse s | isInverse s = inverse s
---                   | otherwise   = s
---
-----updateSimplex :: (Simplex s, Eq a) => [T_ (s a)] -> (T_ (s a) -> T_ (s a)) -> s a -> [T_ (s a)]
-----updateSimplex tAr f simplex = foldr updateSimplex' [] tAr where
-----   updateSimplex' t ts | t == t_ simplex = f t : ts
-----                       | otherwise       = t : ts
+
+updateSimplex tAr f simplex = foldr updateSimplex' [] tAr where
+    updateSimplex' t ts | tElemSimplex_ t == simplex = f t : ts
+                        | otherwise       =   t : ts
+
+reverseIfInverse s | isInverse s = inverse s
+                   | otherwise   = s
+

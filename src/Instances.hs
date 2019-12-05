@@ -1,5 +1,6 @@
 {-#language FlexibleInstances #-}
 {-#language FlexibleContexts #-}
+{-#language MultiParamTypeClasses #-}
 module Instances where
 
 import Numeric.Field.Class
@@ -11,8 +12,12 @@ import Data.Pointed
 
 import Numeric.Domain.PID
 import Numeric.Field.Class
+import Numeric.Module.Class
 import qualified Numeric.Additive.Class as Additive
-import qualified Numeric.Additive.Group as Group (negate)
+import qualified Numeric.Additive.Group as Group (negate, Group)
+import qualified Numeric.Algebra.Class as Algebra ((*), Monoidal)
+import qualified Numeric.Algebra.Division as Division (recip)
+import qualified Numeric.Algebra as Natural (Natural)
 import Numeric.Decidable.Zero (isZero)
 import Numeric.Algebra.Class (zero)
 import Numeric.Algebra.Unital (one)
@@ -26,13 +31,13 @@ instance (Simplex s, Eq f, Eq (s a), Eq a) => Eq (T_ f s a) where
       tElemSimplex_ t0 == tElemSimplex_ t1
        || inverse (tElemSimplex_ t0) == tElemSimplex_ t1
 
-instance (Eq f, Eq (s a)) => Eq (FChain f s a) where 
-    FChain f0 == FChain f1 = length f0 == length f1 && 
-                             all (flip elem f1) f0 
+instance (Eq f, Eq (s a)) => Eq (FChain f s a) where
+    FChain f0 == FChain f1 = length f0 == length f1 &&
+                             all (flip elem f1) f0
 
 instance (Field f, Ord a, Simplex s) => Semigroup (FChain f s a) where
    --FChain s0 <> FChain s1 = FChain $ [((fst . head) s0 + (fst . head) s1, s0)]
-   FChain s0 <> FChain s1 = FChain $ filter (not . isZero . fst) $
+   FChain s0 <> FChain s1 =  FChain $ filter (not . isZero . fst) $
        foldr reduce [] $ (sortBy simplexSort $ s0 <> s1) where
            simplexSort ss0 ss1 = compare (sort . simplexToList . snd $ ss0)
                                          (sort . simplexToList . snd $ ss1)
@@ -50,8 +55,38 @@ instance (Field f, Ord a, Simplex s) => Group (FChain f s a) where
 
 instance (Field f, Ord a, Simplex s) => Abelian (FChain f s a)
 
+--- Kmett Instances:
 instance (Field f, Ord a, Simplex s) => Additive.Additive (FChain f s a) where
     (+) = (<>)
+
+plus a b = trace (show a ++ "plus" ++ show b) $ a <> b
+
+instance (Field f, Ord a, Simplex s) => LeftModule f (FChain f s a) where
+    f .* (FChain cs) = FChain $ filter (not . isZero . fst) $ (product f) <$> cs where
+       product factor (f, s) = (factor Algebra.* f, s)
+
+instance (Field f, Ord a, Simplex s) => LeftModule Integer (FChain f s a) where
+    int .* chain   | int == 0 = FChain []
+                   | int >  0 = last $ take (fromInteger int ) $ iterate (chain Additive.+ ) chain
+                   | int <  0 = last $ take (-fromInteger int) $ iterate (invChain Additive.+) invChain where
+        inv (f, s) = (Division.recip f, s)
+        invChain  = FChain . (inv <$>) . getFChain $ chain
+
+instance (Field f, Ord a, Simplex s) => RightModule Integer (FChain f s a) where
+     chain *. int = int .* chain
+
+instance (Field f, Ord a, Simplex s) => LeftModule Natural.Natural (FChain f s a) where
+      nat .* chain = (toInteger nat) .* chain
+
+instance (Field f, Ord a, Simplex s) => RightModule Natural.Natural (FChain f s a) where
+     chain *. nat = nat .* chain
+
+instance (Field f, Ord a, Simplex s) => Algebra.Monoidal (FChain f s a) where
+    zero = FChain []
+
+instance (Field f, Ord a, Simplex s) => Group.Group (FChain f s a) where
+    negate (FChain c) = FChain $ inv <$> c where
+        inv (f, s) = (Group.negate f, s)
 
 instance (Ord a, Simplex s) => Semigroup (Chain s a) where
    Chain s0 <> Chain s1 = Chain $ s0 `simplexAppend` s1
@@ -123,11 +158,37 @@ instance (Simplex s) => Foldable (DSimplex s) where
 -----  isInverse     (DSimplex l d) = isInverse l
 -----  boundary  one  = boundary one . dSimplex
 
-instance {-#OVERLAPS#-} (Ord a, FSimplex s) => Ord (s a) where
-  compare a b | False = undefined
-              | degree    a /= degree    b = compare (degree    a) (degree    b)
-              | dimension a /= dimension b = compare (dimension b) (dimension a)
-              | otherwise                  = compare (sort . simplexToList $ a) (sort . simplexToList $ b)
+--instance {-#OVERLAPS#-} (Ord a, FSimplex s) => Ord (s a) where
+--  compare a b | False = undefined
+--              | degree    a /= degree    b = compare (degree    a) (degree    b)
+--              | dimension a /= dimension b = compare (dimension b) (dimension a)
+--              | otherwise                  = compare (sort . simplexToList $ a) (sort . simplexToList $ b)
+
+instance (Simplex s, Ord a) => Eq (DSimplex s a) where
+    a@(DSimplex s0 d0) == b@(DSimplex s1 d1)
+       | degreeSimplex a /= degreeSimplex b = False
+       | dimension s0 /= dimension s1 = False
+       | otherwise = (sort . simplexToList $ s0) == (sort . simplexToList $ s1)
+
+instance (Simplex s, Ord a) => Ord (DSimplex s a) where
+    compare a@(DSimplex s0 d0) b@(DSimplex s1 d1)
+       | degreeSimplex a /= degreeSimplex b =
+          compare (degreeSimplex a) (degreeSimplex b)
+       | dimension s0 /= dimension s1 =
+          compare (dimension s0) (dimension s1)
+       | otherwise = compare (sort . simplexToList $ s0) (sort . simplexToList $ s1)
+
+instance Simplex (DSimplex ListSimplex) where
+  emptySimplex        = DSimplex (ListSimplex False []) 0
+  simplexAppend d0 d1 = undefined
+  dimension    (DSimplex s0 d0) = dimension s0
+  boundary one (DSimplex s0 d0) = undefined
+
+  --inverse             ::  s a  -> s a
+  --isInverse           ::  s a  -> Bool
+  --simplexToList       ::  s a  -> [a]
+  --simplexFromList     ::   [a] -> s a
+    
 
 instance {-#OVERLAPS#-} (Eq a, Simplex s) => Eq (s a) where
   l == l0 | dimension l /= dimension l0 = False

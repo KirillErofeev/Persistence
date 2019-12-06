@@ -8,17 +8,42 @@ import Numeric.Module.Class
 import Numeric.Additive.Class
 import Numeric.Additive.Group
 import Numeric.Algebra
-import FiniteFields
+
+import Data.List (sort)
 
 import Types
+import FiniteFields
 import Instances
 import Homology
+import Filtration
 
 
 main :: IO ()
 main = defaultMain tests
 
-tests = testGroup "Tests" [finiteFieldsTests, rationalFieldTests, chainComplexTests, homologyTests]
+--tests = testGroup "Tests" [filtrationTests]
+tests = testGroup "Tests" [filtrationTests, finiteFieldsTests, rationalFieldTests, chainComplexTests, homologyTests]
+
+filtrationTests = testGroup "Filtration tests"
+    [
+     testCase "Filtration simple test" $ filtrationTest      @?= filtrationAnswer
+    ,testCase "Distance border test"   $ distanceBorderTest  @?= distanceBorderAnswer
+    ,testCase "Dimension border test"  $ dimensionBorderTest @?= dimensionBorderAnswer
+    ]
+
+ds s d = DSimplex (ListSimplex False s) d
+filtrationTest :: [DSimplex ListSimplex Double]
+filtrationTest = sort $ buildFiltration [1,2,7] 5 1000 
+filtrationAnswer = sort $ [ds [1]   0, ds [2] 0, ds [7] 0, ds [1,2] 1, ds [1,7] 6, 
+                    ds [2,7] 5, ds [1,2,7] 6]
+
+distanceBorderTest :: [DSimplex ListSimplex Double]
+distanceBorderTest = sort $ buildFiltration [1,2,7] 5 5.3
+distanceBorderAnswer = sort $ [ds [1]   0, ds [2] 0, ds [7] 0, ds [1,2] 1, ds [2,7] 5]
+
+dimensionBorderTest :: [DSimplex ListSimplex Double]
+dimensionBorderTest = sort $ buildFiltration [1,2,7] 1 5.3
+dimensionBorderAnswer = sort $ [ds [1]   0, ds [2] 0, ds [7] 0]
 
 finiteFieldsTests = testGroup "Finite Fields tests"
     [
@@ -26,6 +51,7 @@ finiteFieldsTests = testGroup "Finite Fields tests"
     ,testCase "Z2 is Additive" $ Z2Unit + Z2Unit @?= Z2Zero
     ,testCase "Z2 is Additive" $ Z2Zero + Z2Zero @?= Z2Zero
     ,testCase "Z2 is Additive" $ z2GroupTest     @?= Z2Zero
+    --,testCase "Zero Division"  $ Division.recip Z2Zero @?= error "Zero division in Z2!"
     ]
 
 z2GroupTest = Z2Unit + Z2Zero + negate Z2Unit * Z2Unit + Z2Zero * (negate Z2Unit) + negate Z2Zero

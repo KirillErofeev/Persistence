@@ -37,7 +37,8 @@ carlssonTest ::  ListsPIntervals Double
 --carlssonTest = computePersistentHomology ((1%1) :: Fraction Integer) filtration where
 carlssonTest = computePersistentHomology ((1%1) :: Fraction Integer) filtration where
    --filtration :: ListFiltration (DSimplex ListSimplex Int)
-   filtration = ListFiltration $ uncurry s <$>
+   filtration = --ListFiltration $ 
+         uncurry s <$>
                 [([0]    , 0), ([1],   0),
                  ([2]    , 1), ([3],   1), ([0,1], 1), ([1,2], 1),
                  ([2,3]  , 2), ([0,3], 2),

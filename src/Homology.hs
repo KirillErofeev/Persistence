@@ -32,7 +32,9 @@ import Debug.Trace
 -- should use some map tree instead of list of T_
 
 ---computePersistentHomology one filtration = undefined
-computePersistentHomology one filtration = snd $ let
+computePersistentHomology one filtration = computePersistentHomologyOnSorted one $ 
+                                sort filtration
+computePersistentHomologyOnSorted one filtration = snd $ let
    (tArray', pIntervals') = 
       foldl' (computeFiniteIntervals one) (tArray filtration, pIntervals ) (dSimplex <$> filtration) 
           in
@@ -44,10 +46,9 @@ computeInfiniteIntervals (tAr, pIn) simplex
    | otherwise = (tAr, pIn)
 
 computeFiniteIntervals one (tAr, pIn) simplex = case removePivotRows one tAr simplex of
-   FChain [] -> (updateSimplex tAr (\s -> s {tElemIsMarked_ = True}) simplex, pIn         )
-   d         -> (addBoundary 0 , addPInterval) where
+   FChain [] -> trace (show simplex ++ " empty") (updateSimplex tAr (\s -> s {tElemIsMarked_ = True}) simplex, pIn         )
+   d         -> trace ("Not empty:" ++ show d)  (addBoundary 0 , addPInterval) where
       addBoundary i  = updateSimplex tAr (\s -> s {tElemBoundary_ = Just d}) (dSimplex maxIndSimplex)
-      --addBoundary i  = (updateSimplex tAr (\s -> s {tElemBoundary_ = Just d})) (dSimplex maxIndSimplex)
       addPInterval  = addInterval pIn (dimension maxIndSimplex)
          (PIntervalFinite (degreeSimplex maxIndSimplex) (findDegree tAr simplex))
       maxIndSimplex = maxIndex tAr d
@@ -66,7 +67,8 @@ removePivotRows' one tAr (p, FChain []) = (False, FChain [])
 removePivotRows' one tAr (p,ss) =
    case (tElemBoundary_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss) of
       Nothing -> (False, ss)
-      Just b  -> (True, ss Additive.+ Group.negate (Division.recip q .* b)) where
+      Just b  -> --trace ("b:" ++ show b) 
+                (True, ss Additive.+ Group.negate (Division.recip q .* b)) where
          q = coeffElemInChain b (tElemSimplex_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss)
          simplexCoeff ss s = isInverse $ fromJust $ find (findCoeff s) ss
          findCoeff s s' | s == s' || (inverse s) == s' = True
@@ -102,4 +104,5 @@ updateSimplex tAr f simplex = foldr updateSimplex' [] tAr where
 
 reverseIfInverse s | isInverse s = inverse s
                    | otherwise   = s
+
 

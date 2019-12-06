@@ -73,8 +73,7 @@ instance DecidableZero Z2 where
 instance Rig Z2 
 
 instance Group Z2 where
-    --negate = (((-1) :: Integer) .* ) 
-    negate = trace "neagte" id 
+    negate =  id 
 
 instance Ring Z2 
 --instance Domain Z2 -- Why exactly that??????????

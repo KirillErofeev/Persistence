@@ -233,12 +233,6 @@ instance Filtration ListFiltration where
 -----  degree = degreeSimplex
 -----  updDegree f s = s {degreeSimplex = f $ degreeSimplex s}
 
-instance RealFloat a => Metric (Point a) where
-  distance (Point a b) (Point a0 b0) = realToFrac $ sqrt $ (a - a0)^2 + (b - b0)^2
-
-instance Metric Double where
-  distance a b = abs $ a - b
-
 instance Show a => Show (Point a) where
   show (Point x y) = show x ++ " " ++ show y
 

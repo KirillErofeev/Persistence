@@ -43,9 +43,6 @@ class PIntervals p where
     listKIntervals  :: p a -> Int ->  [PInterval a]
     listIntervals   :: p a ->        [[PInterval a]]
 
-class Metric a where
-  distance :: a -> a -> Double
-
 data ListSimplex a                         = ListSimplex {isInverseSimplex :: Bool, getListSimplex :: [a]} 
 data DSimplex simplex a                    = DSimplex {dSimplex :: simplex a, degreeSimplex :: Double}
 data Point a                               = Point {x :: a, y :: a} deriving (Eq, Ord)

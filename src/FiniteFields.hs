@@ -16,7 +16,7 @@ import Numeric.Decidable.Units
 import Numeric.Decidable.Zero
 import Numeric.Decidable.Associates
 
-import Debug.Trace
+import Debug.Trace 
 
 data Z2 = Z2Zero | Z2Unit deriving Eq
 

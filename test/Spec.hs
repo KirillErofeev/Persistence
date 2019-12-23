@@ -1,5 +1,6 @@
 import Test.Tasty
 import Test.Tasty.HUnit
+import qualified Test.Tasty.QuickCheck as QC
 
 import Prelude hiding ((+), (*), negate)
 import Numeric.Field.Fraction
@@ -21,14 +22,56 @@ import Filtration
 main :: IO ()
 main = defaultMain tests
 
---tests = testGroup "Tests" [filtrationTests]
-tests = testGroup "Tests" [filtrationTests, finiteFieldsTests, rationalFieldTests, chainComplexTests, homologyTests]
+tests :: TestTree
+tests = testGroup "Tests" $ [filtrationTests, finiteFieldsTests, rationalFieldTests, chainComplexTests, homologyTests, properties]
+
+properties :: TestTree
+properties = testGroup "Properties" $ [homologyRandomizeTest]
+
+homologyRandomizeTest = testGroup "Homology Randomize Test"
+    [
+     QC.testProperty  " " $
+         testP
+    ]
+
+testP m = const True $ circleHomology 3 (m :: Double) 3 7    
 
 filtrationTests = testGroup "Filtration tests"
     [
      testCase "Filtration simple test" $ filtrationTest      @?= filtrationAnswer
     ,testCase "Distance border test"   $ distanceBorderTest  @?= distanceBorderAnswer
     ,testCase "Dimension border test"  $ dimensionBorderTest @?= dimensionBorderAnswer
+    ]
+
+finiteFieldsTests = testGroup "Finite Fields tests"
+    [
+     testCase "Z2 is Additive" $ Z2Zero + Z2Unit @?= Z2Unit
+    ,testCase "Z2 is Additive" $ Z2Unit + Z2Unit @?= Z2Zero
+    ,testCase "Z2 is Additive" $ Z2Zero + Z2Zero @?= Z2Zero
+    ,testCase "Z2 is Additive" $ z2GroupTest     @?= Z2Zero
+    --,testCase "Zero Division"  $ Division.recip Z2Zero @?= error "Zero division in Z2!"
+    ]
+
+rationalFieldTests = testGroup "Rational Field tests"
+    [
+     testCase "Division invert trivial"   $ divisionInvertTest     @?= divisionInvertAnswer
+    ,testCase "Division invert"           $ divisionInvertTest0    @?= divisionInvert0Answer
+    ]
+
+chainComplexTests = testGroup "Chain Complex tests"
+    [
+     testCase "FChain additive semigroup" $ fChainAddTest          @?= fChainAddTestAnswer
+    ,testCase "Boundary 1-simplex"        $ boundaryTest           @?= boundaryTestAnswer
+    ,testCase "Boundary 0-simplex"        $ zeroBoundaryTest       @?= zeroBoundaryTestAnswer
+    ,testCase "Boundary 2-simplex"        $ twoSimplexBoundaryTest @?= twoSimplexBoundaryAnswer
+    ,testCase leftModuleTestName          $ leftModuleTest         @?= leftModuleAnswer
+    ]
+
+-- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
+homologyTests = testGroup "Compute homology tests"
+    [
+     --testCase "Carlsson test over fractions field" $ carlssonTest     @?= carlssonTestAnswer
+    testCase "Carlsson test over Z2 "             $ carlssonZ2Test   @?= carlssonZ2Answer
     ]
 
 ds s d = DSimplex (ListSimplex False s) d
@@ -45,22 +88,8 @@ dimensionBorderTest :: [DSimplex ListSimplex Double]
 dimensionBorderTest = sort $ buildFiltration [1,2,7] 1 5.3
 dimensionBorderAnswer = sort $ [ds [1]   0, ds [2] 0, ds [7] 0]
 
-finiteFieldsTests = testGroup "Finite Fields tests"
-    [
-     testCase "Z2 is Additive" $ Z2Zero + Z2Unit @?= Z2Unit
-    ,testCase "Z2 is Additive" $ Z2Unit + Z2Unit @?= Z2Zero
-    ,testCase "Z2 is Additive" $ Z2Zero + Z2Zero @?= Z2Zero
-    ,testCase "Z2 is Additive" $ z2GroupTest     @?= Z2Zero
-    --,testCase "Zero Division"  $ Division.recip Z2Zero @?= error "Zero division in Z2!"
-    ]
 
 z2GroupTest = Z2Unit + Z2Zero + negate Z2Unit * Z2Unit + Z2Zero * (negate Z2Unit) + negate Z2Zero
-
-rationalFieldTests = testGroup "Rational Field tests"
-    [
-     testCase "Division invert trivial"   $ divisionInvertTest     @?= divisionInvertAnswer
-    ,testCase "Division invert"           $ divisionInvertTest0    @?= divisionInvert0Answer
-    ]
 
 divisionInvertTest   = [Division.recip (1%1), Division.recip ((-1)%1)]
 divisionInvertAnswer :: [Fraction Integer]
@@ -70,14 +99,6 @@ divisionInvertTest0   = [Division.recip (1%7), Division.recip ((-13)%3)]
 divisionInvert0Answer :: [Fraction Integer]
 divisionInvert0Answer = [(7%1), (-3)%13]
 
-chainComplexTests = testGroup "Chain Complex tests"
-    [
-     testCase "FChain additive semigroup" $ fChainAddTest          @?= fChainAddTestAnswer
-    ,testCase "Boundary 1-simplex"        $ boundaryTest           @?= boundaryTestAnswer
-    ,testCase "Boundary 0-simplex"        $ zeroBoundaryTest       @?= zeroBoundaryTestAnswer
-    ,testCase "Boundary 2-simplex"        $ twoSimplexBoundaryTest @?= twoSimplexBoundaryAnswer
-    ,testCase leftModuleTestName          $ leftModuleTest         @?= leftModuleAnswer
-    ]
 
 fChainExample :: FChain (Fraction Integer) ListSimplex Int
 fChainExample = fChain 3 [0] <> fChain (-16) [1] <> fChain 7 [3] <> fChain 11 [1] <> fChain' 10 3 [0]
@@ -110,16 +131,11 @@ twoSimplexBoundaryTest = boundary (1%1) (ls [3,7,11])
 twoSimplexBoundaryAnswer :: FChain (Fraction Integer) ListSimplex Int 
 twoSimplexBoundaryAnswer = fChain 1 [7,11] <> fChain (-1) [3,11] <> fChain 1 [3,7] 
 
--- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
-homologyTests = testGroup "Compute homology tests"
-    [
-     testCase "Carlsson test over fractions field" $ carlssonTest     @?= carlssonTestAnswer
-    ,testCase "Carlsson test over Z2 "             $ carlssonZ2Test   @?= carlssonZ2Answer
-    ]
 
 carlssonTest = computePersistentHomology ((1%1) :: Fraction Integer) filtration where
    --filtration :: ListFiltration (DSimplex ListSimplex Int)
-   filtration = ListFiltration $ uncurry s <$>
+   filtration = --ListFiltration $ 
+        uncurry s <$>
                 [([0]    , 0), ([1],   0),
                  ([2]    , 1), ([3],   1), ([0,1], 1), ([1,2], 1),
                  ([2,3]  , 2), ([0,3], 2),
@@ -134,7 +150,8 @@ carlssonTestAnswer = ListsPIntervals $
 
 carlssonZ2Test = computePersistentHomology Z2Unit filtration where
    --filtration :: ListFiltration (DSimplex ListSimplex Int)
-   filtration = ListFiltration $ uncurry s <$>
+   filtration = --ListFiltration $ 
+        uncurry s <$>
                 [([0]    , 0), ([1],   0),
                  ([2]    , 1), ([3],   1), ([0,1], 1), ([1,2], 1),
                  ([2,3]  , 2), ([0,3], 2),

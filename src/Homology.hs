@@ -26,13 +26,15 @@ import Instances
 import Numeric.Field.Fraction
 import Numeric.Field.Class
 
-import Debug.Trace
+--import Debug.Trace
+trace = flip const
+
 
 -- https://geometry.stanford.edu/pape_rs/z-cph-05/zc-cph-05.pdf
 -- should use some map tree instead of list of T_
 
 ---computePersistentHomology one filtration = undefined
-computePersistentHomology one filtration = computePersistentHomologyOnSorted one $ 
+computePersistentHomology one filtration = trace (show . sort $ filtration) computePersistentHomologyOnSorted one $ 
                                 sort filtration
 computePersistentHomologyOnSorted one filtration = snd $ let
    (tArray', pIntervals') = 
@@ -45,9 +47,11 @@ computeInfiniteIntervals (tAr, pIn) simplex
       addInterval pIn (dimension simplex) (PIntervalInfinite $ findDegree tAr simplex))
    | otherwise = (tAr, pIn)
 
-computeFiniteIntervals one (tAr, pIn) simplex = case removePivotRows one tAr simplex of
-   FChain [] -> trace (show simplex ++ " empty") (updateSimplex tAr (\s -> s {tElemIsMarked_ = True}) simplex, pIn         )
-   d         -> trace ("Not empty:" ++ show d)  (addBoundary 0 , addPInterval) where
+computeFiniteIntervals one (tAr, pIn) simplex = trace ("SIMPLEX: " ++ show simplex ) $ case removePivotRows one tAr simplex of
+   FChain [] -> trace ("-----------------" ++ show simplex ++ " empty ------------------------\n") $
+      (updateSimplex tAr (\s -> s {tElemIsMarked_ = True}) simplex, pIn         )
+   d         -> trace ("Not empty:" ++ show d ++ "------------------------\n")  $
+      (addBoundary 0 , addPInterval) where
       addBoundary i  = updateSimplex tAr (\s -> s {tElemBoundary_ = Just d}) (dSimplex maxIndSimplex)
       addPInterval  = addInterval pIn (dimension maxIndSimplex)
          (PIntervalFinite (degreeSimplex maxIndSimplex) (findDegree tAr simplex))
@@ -63,15 +67,14 @@ removePivotRows one tAr simplex = snd $ head $ dropWhile fst $
     iterate (removePivotRows' one tAr) $
     (True, (removeMarkedTerms $ boundary one simplex)) where
         removeMarkedTerms = FChain . (filter (isMarked tAr . snd)) . getFChain  
-removePivotRows' one tAr (p, FChain []) = (False, FChain [])
+removePivotRows' one tAr (p, FChain []) = trace ("BOUNDARY == 0")(False, FChain [])
 removePivotRows' one tAr (p,ss) =
    case (tElemBoundary_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss) of
-      Nothing -> (False, ss)
-      Just b  -> --trace ("b:" ++ show b) 
+      Nothing -> trace ("T[i] is empty == 0") (False, ss)
+      Just b  -> trace ("D /= 0: b:" ++ show b ++ " ss: " ++ show ss ++ " q: " ++ show q ++ " Division.recip q: " ++ show (Division.recip q) ) 
                 (True, ss Additive.+ Group.negate (Division.recip q .* b)) where
          q = coeffElemInChain b (tElemSimplex_ . findSimplex tAr . dSimplex . maxIndex tAr $ ss)
-         simplexCoeff ss s = isInverse $ fromJust $ find (findCoeff s) ss
-         findCoeff s s' | s == s' || (inverse s) == s' = True
+         findCoeff s s' | s == s' = True
                         | otherwise                    = False
          maxSm = (dSimplex .) . maxIndex
 
@@ -92,7 +95,7 @@ maxIndex tAr (FChain boundary) = maximum $
     zipWith DSimplex (snd <$> boundary) $ findDegree tAr <$> (snd <$> boundary)
 findDegree tAr = tElemDegree_ . findSimplex tAr
 findSimplex tAr simplex = fromJust $
-       find (\s -> tElemSimplex_ s == reverseIfInverse simplex) tAr
+       find (\s -> tElemSimplex_ s == simplex) tAr
 
 --updateSimplex tAr f simplex = foldr updateSimplex' [] tAr where
 --    updateSimplex' t ts | t == t_ simplex = f t : ts
@@ -102,7 +105,5 @@ updateSimplex tAr f simplex = foldr updateSimplex' [] tAr where
     updateSimplex' t ts | tElemSimplex_ t == simplex = f t : ts
                         | otherwise       =   t : ts
 
-reverseIfInverse s | isInverse s = inverse s
-                   | otherwise   = s
 
 

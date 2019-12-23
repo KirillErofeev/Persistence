@@ -51,10 +51,12 @@ data ListFiltration simplex                = ListFiltration [simplex]
 data ListsPIntervals a = ListsPIntervals {getListsPIntervals :: [[PInterval a]]} deriving Eq
 data PInterval a                           = PIntervalFinite   {pStart :: a, pFinish :: a} |
                                              PIntervalInfinite {pStart :: a}
-                                                deriving (Show, Eq)
+                                                deriving (Eq)
+data PIntOverZ a = PIntOverZ {getPIntOverZ :: [[(Int, PInterval a)]]}
 
-newtype FChain f s a = FChain {getFChain :: [(f, s a)]} deriving (Show)
+newtype FChain f s a = FChain {getFChain :: [(f, s a)]}
 newtype Chain s a = Chain {getChain :: [s a]} deriving (Show)
+
 
 -- https://geometry.stanford.edu/papers/zc-cph-05/zc-cph-05.pdf
 --data T_ s = T_ {tElemSimplex_ :: s     , tElemIsMarked_ :: Bool     ,
@@ -70,6 +72,19 @@ instance (Show a) => Show (ListsPIntervals a) where
        stMap (k,ins) = "\nk = " ++ show k ++ " ::: " ++ foldMap showIntervals ins
        showIntervals (PIntervalFinite s f) = "(" ++ show s ++ "," ++ show f ++ ")"
        showIntervals (PIntervalInfinite s) = "(" ++ show s ++ ",inf)"
+       emptyProcess "" = "[]"
+       emptyProcess s  = s
+
+instance (Show a) => Show (PInterval a) where
+    show (PIntervalFinite   l r) = "[" ++ show l ++ " " ++ show r ++ "]"
+    show (PIntervalInfinite l) = "[" ++ show l ++ " inf]"
+
+instance (Show a) => Show (PIntOverZ a) where
+   show (PIntOverZ pisOZ) = ("\nPINTERVALS:" ++) . emptyProcess $
+      foldMap stMap (zip [0..] pisOZ) where
+       stMap (k,ins) = "\nk = " ++ show k ++ " ::: " ++ foldMap showIntervals ins
+       showIntervals ins@(k,int) = showMInt $ ins
+       showMInt (k,int) = "{" ++ show k ++ " "++ show int ++ "} "
        emptyProcess "" = "[]"
        emptyProcess s  = s
 

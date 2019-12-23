@@ -96,24 +96,40 @@ instance Show PointS where
 
 circlePointCloud n r = circleP 0 0 r <$> twoPi n
 --circleP :: Double -> Double -> Double -> Double -> Point Double
-circleP a b r x = PointS (a + r * cos x) (b + r * sin x) (take 7 $ show (x - pi))
+circleP a b r x = Point (a + r * cos x) (b + r * sin x) --(take 7 $ show (x - pi))
 twoPi n = [0,2*pi/(n-1)..2*pi]
 
 circle2PointCloud n r = (circleP 30 0 r <$> twoPi n) <> (circleP 0 0 r <$> twoPi n)
 
-circleFiltration n r maxDim maxDist = buildFiltration (circlePointCloud n r) maxDim maxDist
+slowFiltration n = circle2Filtration 23 1 4 7
+slowHomology n = intervalsMultiplicity $ filtEmptyIntervals $ computePersistentHomology Z2Unit $ circleFiltration 17 1 4 7
+circleFiltration n r maxDim maxDist  = buildFiltration (circlePointCloud n r) maxDim maxDist
 circle2Filtration n r maxDim maxDist = buildFiltration (circle2PointCloud n r) maxDim maxDist
---circleHomology n r maxDim maxDist = computePersistentHomology (1%1 :: Fraction Integer) $ circleFiltration n r maxDim maxDist
-circleHomology n r maxDim maxDist = computePersistentHomology (1%1 :: Fraction Integer) $ reverse $ circleFiltration n r maxDim maxDist
+circleHomology n r maxDim maxDist = intervalsMultiplicity $ filtEmptyIntervals $ computePersistentHomology Z2Unit $ circleFiltration n r maxDim maxDist
+--circleHomology n r maxDim maxDist = computePersistentHomology (1%1 :: Fraction Integer) $ reverse $ circleFiltration n r maxDim maxDist
 circle2Homology n r maxDim maxDist = computePersistentHomology (1%1 :: Fraction Integer) $ circle2Filtration n r maxDim maxDist
 
 line2F :: Integer -> Double -> [DSimplex ListSimplex Double]
-line2F maxDim maxDist = buildFiltration [0,1,2,7,111,112,113] maxDim maxDist
-line2H maxDim maxDist = computePersistentHomology Z2Unit (line2F maxDim maxDist)
+line2F maxDim maxDist = buildFiltration [0,1,2,7] maxDim maxDist
+line2H maxDim maxDist = computePersistentHomology (1%1 :: Fraction Integer) (line2F maxDim maxDist)
+line2HZ2 maxDim maxDist = computePersistentHomology Z2Unit (line2F maxDim maxDist)
 --line maxDim maxDist = computePersistentHomology (1%1 :: Fraction Integer) 
-line maxDim maxDist = computePersistentHomology (1%1 :: Fraction Integer)
+line maxDim maxDist = computePersistentHomology Z2Unit
    (reverse $ buildFiltration [1,7,9] maxDim maxDist :: [DSimplex ListSimplex Double])
 
+filtEmptyIntervals (ListsPIntervals pis) = ListsPIntervals $ filter intervalNotEmpty <$> pis where
+    intervalNotEmpty (PIntervalFinite l r) | r - l < 1e-11 = False
+    intervalNotEmpty _                                     = True
+
+intervalsMultiplicity (ListsPIntervals pis) = PIntOverZ $ foldr im [] <$> pis where
+    im pi []              = [(1,pi)] 
+    im pi pisOZ@((piZ,pi1):pis) | isClose pi pi1 = (piZ+1,pi1):pis
+                                | otherwise = (1,pi):pisOZ
+    isClose (PIntervalFinite l r) (PIntervalFinite l0 r0) 
+       | abs (l - l0) < 1e-7 && abs (r - r0) < 1e-7 = True
+    isClose (PIntervalInfinite l) (PIntervalInfinite l0) 
+       | abs (l - l0) < 1e-7 = True
+    isClose _ _ = False
 -- 100 1 3 2   -> 166k simplexes 60 sec
 -- 100 1 3 1   -> 13k  simplexes 5 sec
 -- 100 1 4 1   -> 72k  simplexes 50 sec

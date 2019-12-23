@@ -31,6 +31,9 @@ instance (Simplex s, Eq f, Eq (s a), Eq a) => Eq (T_ f s a) where
       tElemSimplex_ t0 == tElemSimplex_ t1
        || inverse (tElemSimplex_ t0) == tElemSimplex_ t1
 
+instance (Show f, Show (s a)) => Show (FChain f s a) where
+    show (FChain f) = show f
+
 instance (Eq f, Eq (s a)) => Eq (FChain f s a) where
     FChain f0 == FChain f1 = length f0 == length f1 &&
                              all (flip elem f1) f0

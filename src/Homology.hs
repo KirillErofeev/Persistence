@@ -33,7 +33,7 @@ trace = flip const
 -- https://geometry.stanford.edu/pape_rs/z-cph-05/zc-cph-05.pdf
 -- should use some map tree instead of list of T_
 
----computePersistentHomology one filtration = undefined
+-------computePersistentHomology one filtration = undefined
 computePersistentHomology one filtration = trace (show . sort $ filtration) computePersistentHomologyOnSorted one $ 
                                 sort filtration
 computePersistentHomologyOnSorted one filtration = snd $ let

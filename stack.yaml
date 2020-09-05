@@ -38,7 +38,7 @@ packages:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 extra-deps: 
-- partial-order-0.1.2.1
+- partial-order-0.2.0.0
 - algebra-4.3.1
 
 # Override default flag values for local packages and extra-deps
